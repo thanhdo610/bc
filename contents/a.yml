@@ -1,0 +1,119 @@
+
+version: "2.1"
+networks:
+  kit:
+services:
+
+  postgres:
+    container_name: "ilp-demo-maker-postgres"
+    build:
+      context: "src"
+      dockerfile: "PostgresDockerfile"
+    volumes:
+      - "./data/postgres-data:/var/lib/postgresql/data"
+    environment:
+      PGDATA: "/var/lib/postgresql/data"
+      POSTGRES_USER: "admin"
+      POSTGRES_PASSWORD: "password"
+    networks:
+      kit:
+        aliases:
+          - "postgres"
+
+  ilp-kit0:
+    container_name: "ilp-demo-maker-kit0"
+    build:
+      context: "src"
+      dockerfile: "IlpKitDockerfile"
+    command: >
+      /bin/bash -c "
+        while ! nc -z postgres 5432; do sleep 5; done;
+        npm start
+      "
+    volumes:
+      - "./data/uploads0:/usr/src/app/uploads"
+      - ./ilp-plugin-virtual:/usr/src/app/node_modules/ilp-plugin-virtual
+
+    networks:
+      kit:
+        aliases:
+          - "ilp-kit0"
+    ports:
+      - "2010:2010"
+    environment:
+      DB_URI: "postgres://admin:password@postgres/ilp-kit0"
+      API_HOSTNAME: "ilp-kit0"
+      API_PORT: "2100"
+      API_PRIVATE_HOSTNAME: "ilp-kit0"
+      API_PUBLIC_HTTPS: "false"
+      API_PUBLIC_PATH: "/api"
+      API_PUBLIC_PORT: "2010"
+      API_SECRET: "password"
+      CLIENT_HOST: "ilp-kit"
+      CLIENT_PORT: "2010"
+      CLIENT_PUBLIC_PORT: "2010"
+      CLIENT_TITLE: "ILP Kit 0"
+      LEDGER_ADMIN_NAME: "admin"
+      LEDGER_ADMIN_PASS: "password"
+      LEDGER_CURRENCY_CODE: "USD"
+      LEDGER_ILP_PREFIX: "test.dev.kit0."
+      LEDGER_RECOMMENDED_CONNECTORS: "connector"
+      CONNECTOR_ENABLE: "true"
+      CONNECTOR_LEDGERS: '{"test.dev.kit0.":{"currency":"USD","plugin":"ilp-plugin-bells","options":{"account":"http://ilp-kit0:2010/ledger/accounts/connector","password":"password","username":"connector"}},"peer.5rd3h.usd.9.":{"currency":"USD","plugin":"ilp-plugin-virtual","store":true,"options":{"secret":"connie_secret","peerPublicKey":"zhdq6D_w8fs_rr9J9tabzbzdcty4C3kdgm0IQiW_sEE","currency":"USD","maxBalance":"20000000000","currencyCode":"USD","currencyScale":9,"rpcUri":"http://ilp-kit1:3010/api/peers/rpc"}},"peer.UkTdT.btc.9.":{"currency":"BTC","plugin":"ilp-plugin-virtual","store":true,"options":{"secret":"connie_secret","publicKey":"HxImRkXntSjdLb97VMTwwEYPGXJ_ziWoHEyVjtDSGDk","peerPublicKey":"VfOMmtMEtLuNw9bVhCp4mX-Qj3ZYpqBKhyEVq408dno","currency":"BTC","maxBalance":"20000000000","currencyCode":"BTC","currencyScale":9,"rpcUri":"http://ilp-kit1:3010/api/peers/rpc"}}}'
+      CONNECTOR_ROUTES: '[{"targetPrefix":"test.","connectorLedger":"peer.UkTdT.btc.9.","connectorAccount":"peer.UkTdT.btc.9.VfOMmtMEtLuNw9bVhCp4mX-Qj3ZYpqBKhyEVq408dno"}]'
+      CONNECTOR_BACKEND: "fixerio-plus-coinmarketcap"
+      CONNECTOR_MAX_HOLD_TIME: "2000"
+      API_REGISTRATION: "true"
+      LEDGER_AMOUNT_SCALE: "9"
+      LEDGER_AMOUNT_PRECISION: "19"
+      ILP_KIT_CLI_VERSION: "11.0.1"
+      DEBUG: "connector*,ilp*"
+
+  ilp-kit1:
+    container_name: "ilp-demo-maker-kit1"
+    build:
+      context: "src"
+      dockerfile: "IlpKitDockerfile"
+    command: >
+      /bin/bash -c "
+        while ! nc -z postgres 5432; do sleep 5; done;
+        npm start
+      "
+    volumes:
+      - "./data/uploads1:/usr/src/app/uploads"
+      - ./ilp-plugin-virtual:/usr/src/app/node_modules/ilp-plugin-virtual
+
+    networks:
+      kit:
+        aliases:
+          - "ilp-kit1"
+    ports:
+      - "3010:3010"
+    environment:
+      DB_URI: "postgres://admin:password@postgres/ilp-kit1"
+      API_HOSTNAME: "ilp-kit1"
+      API_PORT: "3100"
+      API_PRIVATE_HOSTNAME: "ilp-kit1"
+      API_PUBLIC_HTTPS: "false"
+      API_PUBLIC_PATH: "/api"
+      API_PUBLIC_PORT: "3010"
+      API_SECRET: "password"
+      CLIENT_HOST: "ilp-kit"
+      CLIENT_PORT: "3010"
+      CLIENT_PUBLIC_PORT: "3010"
+      CLIENT_TITLE: "ILP Kit 1"
+      LEDGER_ADMIN_NAME: "admin"
+      LEDGER_ADMIN_PASS: "password"
+      LEDGER_CURRENCY_CODE: "USD"
+      LEDGER_ILP_PREFIX: "test.dev.kit1."
+      LEDGER_RECOMMENDED_CONNECTORS: "connector"
+      CONNECTOR_ENABLE: "true"
+      CONNECTOR_LEDGERS: '{"test.dev.kit1.":{"currency":"USD","plugin":"ilp-plugin-bells","options":{"account":"http://ilp-kit1:3010/ledger/accounts/connector","password":"password","username":"connector"}},"peer.UkTdT.btc.9.":{"currency":"BTC","plugin":"ilp-plugin-virtual","store":true,"options":{"secret":"bob_secret","publicKey":"VfOMmtMEtLuNw9bVhCp4mX-Qj3ZYpqBKhyEVq408dno","peerPublicKey":"HxImRkXntSjdLb97VMTwwEYPGXJ_ziWoHEyVjtDSGDk","currency":"BTC","maxBalance":"20000000000","currencyCode":"BTC","currencyScale":9,"rpcUri":"http://ilp-kit0:2010/api/peers/rpc"}},"peer.5rd3h.usd.9.":{"currency":"USD","plugin":"ilp-plugin-virtual","store":true,"options":{"secret":"dave_secret","peerPublicKey":"HxImRkXntSjdLb97VMTwwEYPGXJ_ziWoHEyVjtDSGDk","currency":"USD","maxBalance":"20000000000","currencyCode":"USD","currencyScale":9,"rpcUri":"http://ilp-kit0:2010/api/peers/rpc"}}}'
+      CONNECTOR_ROUTES: '[{"targetPrefix":"test.","connectorLedger":"peer.5rd3h.usd.9.","connectorAccount":"peer.5rd3h.usd.9.HxImRkXntSjdLb97VMTwwEYPGXJ_ziWoHEyVjtDSGDk"}]'
+      CONNECTOR_BACKEND: "fixerio-plus-coinmarketcap"
+      CONNECTOR_MAX_HOLD_TIME: "2000"
+      API_REGISTRATION: "true"
+      LEDGER_AMOUNT_SCALE: "9"
+      LEDGER_AMOUNT_PRECISION: "19"
+      ILP_KIT_CLI_VERSION: "11.0.1"
+      DEBUG: "connector*,ilp*"
